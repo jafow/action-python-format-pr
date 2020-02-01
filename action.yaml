@@ -1,0 +1,16 @@
+name: 'python-format-pr'
+description: 'Lints PR with black and opens a PR to the target with the fixes'
+author: 'jafow <jared.a.fowler@gmail.com>'
+inputs: 
+  target-file-path:
+    description: 'a path to python files to format'
+    default: 'missing-required.py'
+    required: true
+outputs:
+  fileslist:
+    description: 'files formatted'
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  args:
+    - ${{ inputs.target-file-path }}
