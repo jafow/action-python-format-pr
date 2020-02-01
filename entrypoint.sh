@@ -2,12 +2,15 @@
 
 input_path=$1
 
+if [[ -z "${input_path}" ]]; then
+    input_path=`pwd`
+fi
+
 echo "args: looking at $input_path"
 
 fileslist=$(find $input_path -name "*.py" -type "f")
 
-for x in $fileslist; do
-    printf "%s\n" "looking at this file $x"
-done
+# run black over the files list
+black $fileslist
 
 echo ::set-output name=fileslist::$fileslist
