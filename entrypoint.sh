@@ -47,14 +47,11 @@ formattable=$(git diff "${BASE}" --name-only | tr ' ' '\n' | grep -E '.py$')
 printf "running black \n"
 black -q -l 120 $formattable
 
-printf "is ther a diff?\n"
-
+# if no files in diff then everything is already formatted
 is_already_formatted=$(git diff --name-only)
 
 if [[ "${is_already_formatted}" -eq 0 ]]; then
-    # all formattable files are good to go just exit
-    printf "no diff all files formatted;\n"
-    printf "%s\n" "$formatted"
+    printf "nothing to format. Exiting.\n"
     exit 0
 fi
 
