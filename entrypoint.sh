@@ -61,9 +61,10 @@ set -x
 existing_format_branch=$(git branch -d "${FORMAT_BRANCH}" 2>/dev/null)
 
 
-if [[ "${existing_format_branch}" -eq 1 ]]; then
-    printf "%s\n" "No existing format branch found for ${BASE}"
-    printf "%s\n" "Cutting new format branch for PR"
+if [[ -z "${existing_format_branch}" ]]; then
+    # branch exists making a new one!
+    printf "%s\n" "An existing format branch found for ${BASE}"
+    printf "%s\n" "Cutting new format branch for this PR"
 fi
 
 git checkout -b "${FORMAT_BRANCH}"
