@@ -19,9 +19,11 @@ PULL_REQUESTS="${REPO}/pulls"
 ## repo
 HEAD="${GITHUB_REF}" # ref to the branch that triggered the pull request
 BASE=$(jq --raw-output .pull_request.base.sha "${GITHUB_EVENT_PATH}")
+ARG=$1
 
 printf "%s\n" "head is ${HEAD}"
 printf "%s\n" "BASE is ${BASE}"
+printf "%s\n" "ARG is ${ARG}"
 
 git fetch origin "${BASE}"
 
