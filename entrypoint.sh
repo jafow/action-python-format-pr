@@ -57,6 +57,7 @@ fi
 
 # otherwise we cut a branch and add + commit the changes
 FORMAT_BRANCH="format/${HEAD}"
+set -x
 existing_format_branch=$(git branch -d "${FORMAT_BRANCH}" 2>/dev/null)
 
 
