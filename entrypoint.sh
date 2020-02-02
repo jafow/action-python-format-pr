@@ -17,6 +17,7 @@ REPO="${BASE_URL}/repos/${GITHUB_REPOSITORY}"
 PULL_REQUESTS="${REPO}/pulls"
 
 ## repo
+OWNER=$(echo "${GITHUB_REPOSITORY}" | cut -d / -f 1)
 HEAD="${GITHUB_REF}" # ref to the branch that triggered the pull request
 BASE=$(jq --raw-output .pull_request.base.sha "${GITHUB_EVENT_PATH}")
 ARG=$1
@@ -25,33 +26,49 @@ printf "%s\n" "head is ${HEAD}"
 printf "%s\n" "BASE is ${BASE}"
 printf "%s\n" "ARG is ${ARG}"
 
-git fetch origin "${BASE}"
-
-fileslist=$(git diff origin "${BASE}" --name-only | tr ' ' '\n' | grep -E '.py$')
-
 ##
-# get all the files in the PR
-# filter the python files (if any)
-# format the files
-# if a diff exists
-#   cut a branch "format/$ORIG_BRANCH"
-#   add / commit
-#   push
-#   check no PRS open for current fix branch
-#   create a pr to ORIG_BRANCH
-# prosper
+# configure the git client
+##
+git config --global user.email "formatbot@boop.net"
+git config --global user.name "For Mat Bot"
 
-# input_path=$1
+# add action origin to set the access token
+git remote rm action
+git remote add action "https://${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+printf "%s\n" "adding remote"
+git fetch action "${BASE}"
 
-# if [[ -z "${input_path}" ]]; then
-#     input_path=`pwd`
-# fi
+printf "%s\n" "fetched ${BASE}"
 
-# echo "args: looking at $input_path"
+printf "%s\n" "getting files list"
+formattable=$(git diff "${BASE}" --name-only | tr ' ' '\n' | grep -E '.py$')
 
-# fileslist=$(find $input_path -name "*.py" -type "f")
+# check if any of the formattable files need formatting!
+printf "running black \n"
+black -q -l 120 $formattable
 
-# # run black over the files list
-# black $fileslist
+printf "is ther a diff?\n"
 
-echo ::set-output name=fileslist::$fileslist
+is_already_formatted=$(git diff --name-only)
+
+if [[ "${is_already_formatted}" -eq 0 ]]; then
+    # all formattable files are good to go just exit
+    printf "no diff all files formatted;\n"
+    printf "%s\n" "$formatted"
+    exit 0
+fi
+
+# otherwise we cut a branch and add + commit the changes
+FORMAT_BRANCH="format/${GITHUB_REF}"
+git branch -D "${FORMAT_BRANCH}"
+git checkout -b "${FORMAT_BRANCH}"
+
+git add $formattable
+
+git commit -m "formatbot: run black over $(jq -r .pull_request.number $GITHUB_EVENT_PATH)"
+
+git push action "${FORMAT_BRANCH}"
+
+hub pull-request -b $HEAD -h $FORMAT_BRANCH -a $GITHUB_ACTOR --no-edit
+
+echo ::set-output name=fileslist::$formattable
