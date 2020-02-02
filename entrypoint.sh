@@ -33,10 +33,10 @@ git config --global user.email "formatbot@boop.net"
 git config --global user.name "For Mat Bot"
 
 # add action origin to set the access token
-git remote rm action
-git remote add action "https://${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+git remote rm origin
+git remote add origin "https://${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
 printf "%s\n" "adding remote"
-git fetch action "${BASE}"
+git fetch origin "${BASE}"
 
 printf "%s\n" "fetched ${BASE}"
 
@@ -67,7 +67,7 @@ git add $formattable
 
 git commit -m "formatbot: run black over $(jq -r .pull_request.number $GITHUB_EVENT_PATH)"
 
-git push action "${FORMAT_BRANCH}"
+git push origin "${FORMAT_BRANCH}"
 
 hub pull-request -b $HEAD -h $FORMAT_BRANCH -a $GITHUB_ACTOR --no-edit
 
