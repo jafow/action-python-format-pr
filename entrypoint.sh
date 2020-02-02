@@ -18,7 +18,7 @@ PULL_REQUESTS="${REPO}/pulls"
 
 ## repo
 OWNER=$(echo "${GITHUB_REPOSITORY}" | cut -d / -f 1)
-HEAD="${GITHUB_REF}" # ref to the branch that triggered the pull request
+HEAD=$(jq --raw-output .pull_request.head.ref "${GITHUB_EVENT_PATH}") # ref to the branch that triggered the pull request
 BASE=$(jq --raw-output .pull_request.base.sha "${GITHUB_EVENT_PATH}")
 ARG=$1
 
@@ -59,7 +59,7 @@ if [[ "${is_already_formatted}" -eq 0 ]]; then
 fi
 
 # otherwise we cut a branch and add + commit the changes
-FORMAT_BRANCH="format/${GITHUB_REF}"
+FORMAT_BRANCH="format/${HEAD}"
 git branch -D "${FORMAT_BRANCH}"
 git checkout -b "${FORMAT_BRANCH}"
 
