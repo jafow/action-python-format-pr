@@ -57,15 +57,15 @@ fi
 
 # otherwise we cut a branch and add + commit the changes
 FORMAT_BRANCH="format/${HEAD}"
-set -x
-existing_format_branch=$(git branch -d "${FORMAT_BRANCH}" 2>/dev/null)
+# set -x
+# existing_format_branch=$(git branch -D "${FORMAT_BRANCH}" 2>/dev/null)
 
 
-if [[ -z "${existing_format_branch}" ]]; then
-    # branch exists making a new one!
-    printf "%s\n" "An existing format branch found for ${BASE}"
-    printf "%s\n" "Cutting new format branch for this PR"
-fi
+# if [[ -z "${existing_format_branch}" ]]; then
+#     # branch exists making a new one!
+#     printf "%s\n" "An existing format branch found for ${BASE}"
+#     printf "%s\n" "Cutting new format branch for this PR"
+# fi
 
 git checkout -b "${FORMAT_BRANCH}"
 
