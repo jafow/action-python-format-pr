@@ -57,15 +57,21 @@ fi
 
 # otherwise we cut a branch and add + commit the changes
 FORMAT_BRANCH="format/${HEAD}"
-git branch -D "${FORMAT_BRANCH}"
+existing_format_branch=$(git branch -d "${FORMAT_BRANCH}" 2>/dev/null)
+
+if [[ "${existing_format_branch}" -eq 1 ]]; then
+    printf "%s\n" "No existing format branch found for ${BASE}"
+    printf "%s\n" "Cutting new format branch for PR"
+fi
+
 git checkout -b "${FORMAT_BRANCH}"
 
+# add specifically the formatted files, commit them, and push the branch
 git add $formattable
-
 git commit -m "formatbot: run black over $(jq -r .pull_request.number $GITHUB_EVENT_PATH)"
-
 git push origin "${FORMAT_BRANCH}"
-
+ # todo @jafow these will break on forked repos?
 hub pull-request -b $HEAD -h $FORMAT_BRANCH -a $GITHUB_ACTOR --no-edit
 
+# output the list of formatted files
 echo ::set-output name=fileslist::$formattable
