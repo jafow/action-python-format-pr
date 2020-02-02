@@ -10,13 +10,11 @@ ENV HUB_VERSION "2.14.1"
 
 COPY LICENSE README.md /
 
-RUN apt-get update && apt-get install -y bash curl git \
+RUN apt-get update && apt-get install -y bash curl git jq \
     && curl -sSL https://github.com/github/hub/releases/download/v$HUB_VERSION/hub-linux-amd64-$HUB_VERSION.tgz | tar -xzpf - \
     && mv hub-linux-amd64-$HUB_VERSION/bin/hub /bin \
     && rm -Rf hub-linux-amd64-$HUB_VERSION \
     && pip install black
-
-
 
 COPY entrypoint.sh /entrypoint.sh
 
