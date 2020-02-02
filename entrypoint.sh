@@ -26,9 +26,19 @@ printf "%s\n" "head is ${HEAD}"
 printf "%s\n" "BASE is ${BASE}"
 printf "%s\n" "ARG is ${ARG}"
 
-##
+
+################################################################################
+# helpers
+################################################################################
+handle_delete_missing_branch() {
+    printf "%s\n" "Tried to delete a branch $1 that doesn't exist; Noop"
+}
+
+
+
+################################################################################
 # configure the git client
-##
+################################################################################
 git config --global user.email "formatbot@boop.net"
 git config --global user.name "For Mat Bot"
 
@@ -57,15 +67,15 @@ fi
 
 # otherwise we cut a branch and add + commit the changes
 FORMAT_BRANCH="format/${HEAD}"
-# set -x
+
 # existing_format_branch=$(git branch -D "${FORMAT_BRANCH}" 2>/dev/null)
+git branch -D "${FORMAT_BRANCH}" 2>/dev/null || handle_delete_missing_branch $?
 
-
-# if [[ -z "${existing_format_branch}" ]]; then
-#     # branch exists making a new one!
-#     printf "%s\n" "An existing format branch found for ${BASE}"
-#     printf "%s\n" "Cutting new format branch for this PR"
-# fi
+if [[ -z "${existing_format_branch}" ]]; then
+    # branch exists making a new one!
+    printf "%s\n" "An existing format branch found for ${BASE}"
+    printf "%s\n" "Cutting new format branch for this PR"
+fi
 
 git checkout -b "${FORMAT_BRANCH}"
 
