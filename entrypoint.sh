@@ -48,6 +48,7 @@ printf "running black \n"
 black -q -l 120 $formattable
 
 # if no files in diff then everything is already formatted
+set -x
 is_already_formatted=$(git diff --name-only)
 
 if [[ "${is_already_formatted}" -eq 0 ]]; then
@@ -59,10 +60,12 @@ fi
 FORMAT_BRANCH="format/${HEAD}"
 existing_format_branch=$(git branch -d "${FORMAT_BRANCH}" 2>/dev/null)
 
+
 if [[ "${existing_format_branch}" -eq 1 ]]; then
     printf "%s\n" "No existing format branch found for ${BASE}"
     printf "%s\n" "Cutting new format branch for PR"
 fi
+set +x
 
 git checkout -b "${FORMAT_BRANCH}"
 
