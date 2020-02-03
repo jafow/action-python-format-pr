@@ -44,7 +44,8 @@ clear_remote_branch() {
     local br=$1
     git ls-remote --exit-code "${REMOTE}" "${br}"
     if [[ "$?" -eq 2 ]]; then
-        # there are no branch on remote matching the created format branch.  printf "there is NO matching branch on remote\n"
+        # there are no branch on remote matching the created format branch. 
+        printf "there is NO matching branch on remote\n"
     else
         # there is a match so remove
         printf "there is a matching branch on remote\n"
@@ -102,7 +103,6 @@ git push "${REMOTE}" "${FORMAT_BRANCH}"
 
 printf "opening PR\n"
 hub pull-request -b "${HEAD}" -h "${FORMAT_BRANCH}" -a "${GITHUB_ACTOR}" -m "python-format-action: fixing files that need formatting"
-set -x
 
 # output the list of formatted files
 echo ::set-output name=fileslist::$formattable
