@@ -58,7 +58,7 @@ clear_remote_branch() {
 # configure the git client
 ################################################################################
 git config --global user.email "formatbot@boop.net"
-git config --global user.name "For Mat Bot"
+git config --global user.name "FormatBot"
 
 git remote rm "${REMOTE}"
 git remote add "${REMOTE}" "https://${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
@@ -90,9 +90,8 @@ clear_local_branch "${FORMAT_BRANCH}"|| handle_delete_missing_branch "${FORMAT_B
 clear_remote_branch "${FORMAT_BRANCH}" || handle_delete_missing_branch "${FORMAT_BRANCH}"
 
 git checkout -b "${FORMAT_BRANCH}"
-# add specifically the formatted files, commit them, and push the branch
-git add $formattable
-git commit -m "formatbot: run black over $(jq -r .pull_request.number $GITHUB_EVENT_PATH)"
+# add the formatted files, commit them, and push the branch
+git commit --all --author="FormatBot" -m "formatbot: run black over $(jq -r .pull_request.number $GITHUB_EVENT_PATH)"
 git push "${REMOTE}" "${FORMAT_BRANCH}"
  # todo @jafow these will break on forked repos?
 hub pull-request -b $HEAD -h $FORMAT_BRANCH -a $GITHUB_ACTOR --no-edit
