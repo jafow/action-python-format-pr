@@ -44,8 +44,7 @@ clear_remote_branch() {
     local br=$1
     git ls-remote --exit-code "${REMOTE}" "${br}"
     if [[ "$?" -eq 2 ]]; then
-        # there are no branch on remote matching the created format branch.
-        printf "there is NO matching branch on remote\n"
+        # there are no branch on remote matching the created format branch.  printf "there is NO matching branch on remote\n"
     else
         # there is a match so remove
         printf "there is a matching branch on remote\n"
@@ -90,11 +89,20 @@ clear_local_branch "${FORMAT_BRANCH}"|| handle_delete_missing_branch "${FORMAT_B
 clear_remote_branch "${FORMAT_BRANCH}" || handle_delete_missing_branch "${FORMAT_BRANCH}"
 
 git checkout -b "${FORMAT_BRANCH}"
+printf "checkout ${FORMAT_BRANCH}\n"
 # add the formatted files, commit them, and push the branch
-git commit --all  -m "python-format-action: run black over PR #$(jq -r .pull_request.number $GITHUB_EVENT_PATH)"
+git add .
+printf "adding files\n"
+git status
+printf "commiting files\n"
+git commit -m "python-format-action: run black over PR #$(jq -r .pull_request.number $GITHUB_EVENT_PATH)"
+printf "pushing \n"
+set -x
 git push "${REMOTE}" "${FORMAT_BRANCH}"
- # todo @jafow these will break on forked repos?
-hub pull-request -b $HEAD -h $FORMAT_BRANCH -a $GITHUB_ACTOR --no-edit
+
+printf "opening PR\n"
+hub pull-request -b "${HEAD}" -h "${FORMAT_BRANCH}" -a "${GITHUB_ACTOR}" -m "python-format-action: fixing files that need formatting"
+set -x
 
 # output the list of formatted files
 echo ::set-output name=fileslist::$formattable
