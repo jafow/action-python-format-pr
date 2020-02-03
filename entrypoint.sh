@@ -7,26 +7,10 @@ set -o pipefail;
 #
 # all variables prefixed with "GITHUB_" are passed in via the action context
 ################################################################################
-API_VERSION=v3
-BASE_URL=https://api.github.com
-AUTH_HEADER="Authorization: token ${GITHUB_TOKEN}"
-HEADERS="Accept: application/vnd.github.${API_VERSION}+json"
-
-## url
-REPO="${BASE_URL}/repos/${GITHUB_REPOSITORY}"
-PULL_REQUESTS="${REPO}/pulls"
-
 ## repo
-OWNER=$(echo "${GITHUB_REPOSITORY}" | cut -d / -f 1)
 HEAD=$(jq --raw-output .pull_request.head.ref "${GITHUB_EVENT_PATH}") # ref to the branch that triggered the pull request
 BASE=$(jq --raw-output .pull_request.base.sha "${GITHUB_EVENT_PATH}")
 REMOTE=origin
-ARG=$1
-
-printf "%s\n" "head is ${HEAD}"
-printf "%s\n" "BASE is ${BASE}"
-printf "%s\n" "ARG is ${ARG}"
-
 
 ################################################################################
 # helpers
@@ -62,16 +46,11 @@ git config --global user.name "FormatBot"
 
 git remote rm "${REMOTE}"
 git remote add "${REMOTE}" "https://${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-printf "%s\n" "adding remote"
 git fetch "${REMOTE}" "${BASE}"
 
-printf "%s\n" "fetched ${BASE}"
-
-printf "%s\n" "getting files list"
 formattable=$(git diff "${BASE}" --name-only | tr ' ' '\n' | grep -E '.py$')
+printf "%s\n" "getting files list ${formattable}"
 
-# check if any of the formattable files need formatting!
-printf "running black \n"
 black -q -l 120 $formattable
 
 # if no files in diff then everything is already formatted
@@ -90,15 +69,10 @@ clear_local_branch "${FORMAT_BRANCH}"|| handle_delete_missing_branch "${FORMAT_B
 clear_remote_branch "${FORMAT_BRANCH}" || handle_delete_missing_branch "${FORMAT_BRANCH}"
 
 git checkout -b "${FORMAT_BRANCH}"
-printf "checkout ${FORMAT_BRANCH}\n"
+
 # add the formatted files, commit them, and push the branch
 git add .
-printf "adding files\n"
-git status
-printf "commiting files\n"
 git commit -m "python-format-action: run black over PR #$(jq -r .pull_request.number $GITHUB_EVENT_PATH)"
-printf "pushing \n"
-set -x
 git push "${REMOTE}" "${FORMAT_BRANCH}"
 
 printf "opening PR\n"
