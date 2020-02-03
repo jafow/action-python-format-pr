@@ -20,6 +20,7 @@ PULL_REQUESTS="${REPO}/pulls"
 OWNER=$(echo "${GITHUB_REPOSITORY}" | cut -d / -f 1)
 HEAD=$(jq --raw-output .pull_request.head.ref "${GITHUB_EVENT_PATH}") # ref to the branch that triggered the pull request
 BASE=$(jq --raw-output .pull_request.base.sha "${GITHUB_EVENT_PATH}")
+REMOTE=origin
 ARG=$1
 
 printf "%s\n" "head is ${HEAD}"
@@ -34,6 +35,23 @@ handle_delete_missing_branch() {
     printf "%s\n" "Tried to delete a branch $1 that doesn't exist; Noop"
 }
 
+clear_local_branch() {
+    local br=$1
+    git branch -D "${br}" 2>/dev/null
+}
+
+clear_remote_branch() {
+    local br=$1
+    git ls-remote --exit-code "${REMOTE}" "${br}"
+    if [[ "$?" -eq 2 ]]; then
+        # there are no branch on remote matching the created format branch.
+        printf "there is NO matching branch on remote\n"
+    else
+        # there is a match so remove
+        printf "there is a matching branch on remote\n"
+        git push "${REMOTE}" "${br}" --delete
+    fi
+}
 
 
 ################################################################################
@@ -42,11 +60,10 @@ handle_delete_missing_branch() {
 git config --global user.email "formatbot@boop.net"
 git config --global user.name "For Mat Bot"
 
-# add action origin to set the access token
-git remote rm origin
-git remote add origin "https://${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+git remote rm "${REMOTE}"
+git remote add "${REMOTE}" "https://${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
 printf "%s\n" "adding remote"
-git fetch origin "${BASE}"
+git fetch "${REMOTE}" "${BASE}"
 
 printf "%s\n" "fetched ${BASE}"
 
@@ -68,21 +85,15 @@ fi
 # otherwise we cut a branch and add + commit the changes
 FORMAT_BRANCH="format/${HEAD}"
 
-# existing_format_branch=$(git branch -D "${FORMAT_BRANCH}" 2>/dev/null)
-git branch -D "${FORMAT_BRANCH}" 2>/dev/null || handle_delete_missing_branch $?
-
-if [[ -z "${existing_format_branch}" ]]; then
-    # branch exists making a new one!
-    printf "%s\n" "An existing format branch found for ${BASE}"
-    printf "%s\n" "Cutting new format branch for this PR"
-fi
+# delete any local copy of the branch
+clear_local_branch "${FORMAT_BRANCH}"|| handle_delete_missing_branch "${FORMAT_BRANCH}"
+clear_remote_branch "${FORMAT_BRANCH}" || handle_delete_missing_branch "${FORMAT_BRANCH}"
 
 git checkout -b "${FORMAT_BRANCH}"
-
 # add specifically the formatted files, commit them, and push the branch
 git add $formattable
 git commit -m "formatbot: run black over $(jq -r .pull_request.number $GITHUB_EVENT_PATH)"
-git push origin "${FORMAT_BRANCH}"
+git push "${REMOTE}" "${FORMAT_BRANCH}"
  # todo @jafow these will break on forked repos?
 hub pull-request -b $HEAD -h $FORMAT_BRANCH -a $GITHUB_ACTOR --no-edit
 
