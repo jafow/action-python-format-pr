@@ -91,7 +91,7 @@ clear_remote_branch "${FORMAT_BRANCH}" || handle_delete_missing_branch "${FORMAT
 
 git checkout -b "${FORMAT_BRANCH}"
 # add the formatted files, commit them, and push the branch
-git commit --all --author="FormatBot" -m "formatbot: run black over $(jq -r .pull_request.number $GITHUB_EVENT_PATH)"
+git commit --all  -m "python-format-action: run black over PR #$(jq -r .pull_request.number $GITHUB_EVENT_PATH)"
 git push "${REMOTE}" "${FORMAT_BRANCH}"
  # todo @jafow these will break on forked repos?
 hub pull-request -b $HEAD -h $FORMAT_BRANCH -a $GITHUB_ACTOR --no-edit
