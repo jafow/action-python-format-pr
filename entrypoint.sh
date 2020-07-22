@@ -47,26 +47,45 @@ configure_git_client() {
     git fetch "${REMOTE}" "${BASE}"
 }
 
+# debug print
+dbg() {
+    local msg=$1
+    if [[ "${LOG_LEVEL}" == "DEBUG" ]]; then
+        printf "%s\n" "$msg"
+    fi
+}
+
+# sets the required action output
+set_output() {
+    echo ::set-output name=fileslist::$formattable
+}
+
+################################################################################
+# main
+################################################################################
 main() {
     configure_git_client
 
     # check diff has python files 
-    formattable=$(git diff "${BASE}" --name-only | tr ' ' '\n' | grep -E '.py$')
+    formattable=$(git diff "${BASE}" --name-only --diff-filter="ACMR" | tr ' ' '\n' | grep -E '.py$')
     if [[ -z "${formattable}" ]]; then
         printf "%s\n" "No *.py files found to format. Nothing to do.\n"
         echo ::set-output name=fileslist::$formattable
         exit 0
     fi
 
+    dbg "formatting these files: ${formattable}"
+
     # There are *.py files; Run formatter.
     # TODO allow the formatter and options to be passed inputs
     black -q -l 120 $formattable
 
     # if no files in diff then everything is already formatted
-    is_already_formatted=$(git diff --name-only)
+    is_already_formatted=$(git diff --name-only --diff-filter="ACMR")
 
     if [[ -z "${is_already_formatted}" ]]; then
         printf "nothing to format. Exiting.\n"
+        set_output
         exit 0
     fi
 
@@ -88,5 +107,7 @@ main() {
     hub pull-request -b "${HEAD}" -h "${FORMAT_BRANCH}" -a "${GITHUB_ACTOR}" -m "python-format-action: fixing files that need formatting"
 
     # output the list of formatted files
-    echo ::set-output name=fileslist::$formattable
+    set_output
 }
+
+main
